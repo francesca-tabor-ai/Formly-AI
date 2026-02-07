@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useMemo } from 'react'
 import { useParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
@@ -18,9 +18,17 @@ export default function RespondPage() {
   const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
   const [error, setError] = useState('')
-  const supabase = createClient()
+  
+  // Only create client in browser to avoid SSR issues
+  const supabase = useMemo(() => {
+    if (typeof window !== 'undefined') {
+      return createClient()
+    }
+    return null
+  }, [])
 
   const loadForm = useCallback(async () => {
+    if (!supabase) return
     const [formRes, questionsRes] = await Promise.all([
       supabase
         .from('forms')
@@ -52,6 +60,7 @@ export default function RespondPage() {
   }
 
   const handleSubmit = async () => {
+    if (!supabase) return
     setSubmitting(true)
     setError('')
 

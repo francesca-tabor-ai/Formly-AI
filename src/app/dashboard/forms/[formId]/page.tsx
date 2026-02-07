@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useMemo } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
@@ -35,9 +35,17 @@ export default function FormDetailPage() {
   const [segmentCount, setSegmentCount] = useState(0)
   const [respondentCount, setRespondentCount] = useState(0)
   const [responseCount, setResponseCount] = useState(0)
-  const supabase = createClient()
+  
+  // Only create client in browser to avoid SSR issues
+  const supabase = useMemo(() => {
+    if (typeof window !== 'undefined') {
+      return createClient()
+    }
+    return null
+  }, [])
 
   const loadForm = useCallback(async () => {
+    if (!supabase) return
     const { data } = await supabase
       .from('forms')
       .select('*')
@@ -48,6 +56,7 @@ export default function FormDetailPage() {
   }, [formId, supabase])
 
   const loadCounts = useCallback(async () => {
+    if (!supabase) return
     const [questions, segments, respondents, responses] = await Promise.all([
       supabase
         .from('questions')
@@ -78,6 +87,7 @@ export default function FormDetailPage() {
   }, [loadForm, loadCounts])
 
   const updateStatus = async (status: FormStatus) => {
+    if (!supabase) return
     await supabase.from('forms').update({ status }).eq('id', formId)
     loadForm()
   }
@@ -90,7 +100,7 @@ export default function FormDetailPage() {
   }
 
   const deleteForm = async () => {
-    if (!confirm('Are you sure you want to delete this form?')) return
+    if (!confirm('Are you sure you want to delete this form?') || !supabase) return
     await supabase.from('forms').delete().eq('id', formId)
     router.push('/dashboard')
   }

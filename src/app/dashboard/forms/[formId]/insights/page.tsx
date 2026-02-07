@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useMemo } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
@@ -24,9 +24,17 @@ export default function InsightsPage() {
   const [insights, setInsights] = useState<InsightSummary | null>(null)
   const [loading, setLoading] = useState(true)
   const [exporting, setExporting] = useState(false)
-  const supabase = createClient()
+  
+  // Only create client in browser to avoid SSR issues
+  const supabase = useMemo(() => {
+    if (typeof window !== 'undefined') {
+      return createClient()
+    }
+    return null
+  }, [])
 
   const loadInsights = useCallback(async () => {
+    if (!supabase) return
     const [questionsRes, segmentsRes, respondentsRes, responsesRes] =
       await Promise.all([
         supabase.from('questions').select('*').eq('form_id', formId),

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
@@ -13,11 +13,18 @@ export default function NewFormPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const router = useRouter()
-  const supabase = createClient()
+  
+  // Only create client in browser to avoid SSR issues
+  const supabase = useMemo(() => {
+    if (typeof window !== 'undefined') {
+      return createClient()
+    }
+    return null
+  }, [])
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!name.trim()) return
+    if (!name.trim() || !supabase) return
     setLoading(true)
     setError('')
 

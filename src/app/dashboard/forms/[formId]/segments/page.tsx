@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useMemo } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
@@ -18,13 +18,21 @@ export default function SegmentsPage() {
   const [loading, setLoading] = useState(true)
   const [showAdd, setShowAdd] = useState(false)
   const [editingSegment, setEditingSegment] = useState<Segment | null>(null)
-  const supabase = createClient()
+  
+  // Only create client in browser to avoid SSR issues
+  const supabase = useMemo(() => {
+    if (typeof window !== 'undefined') {
+      return createClient()
+    }
+    return null
+  }, [])
 
   const [name, setName] = useState('')
   const [weight, setWeight] = useState('1')
   const [saving, setSaving] = useState(false)
 
   const loadSegments = useCallback(async () => {
+    if (!supabase) return
     const { data } = await supabase
       .from('segments')
       .select('*')
@@ -40,7 +48,7 @@ export default function SegmentsPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!name.trim()) return
+    if (!name.trim() || !supabase) return
     setSaving(true)
 
     if (editingSegment) {
@@ -72,7 +80,7 @@ export default function SegmentsPage() {
   }
 
   const deleteSegment = async (id: string) => {
-    if (!confirm('Delete this segment?')) return
+    if (!confirm('Delete this segment?') || !supabase) return
     await supabase.from('segments').delete().eq('id', id)
     loadSegments()
   }

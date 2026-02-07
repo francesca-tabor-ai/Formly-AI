@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useMemo } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
@@ -21,13 +21,21 @@ export default function RespondentsPage() {
   const [segments, setSegments] = useState<Segment[]>([])
   const [loading, setLoading] = useState(true)
   const [showAdd, setShowAdd] = useState(false)
-  const supabase = createClient()
+  
+  // Only create client in browser to avoid SSR issues
+  const supabase = useMemo(() => {
+    if (typeof window !== 'undefined') {
+      return createClient()
+    }
+    return null
+  }, [])
 
   const [email, setEmail] = useState('')
   const [segmentId, setSegmentId] = useState('')
   const [saving, setSaving] = useState(false)
 
   const loadData = useCallback(async () => {
+    if (!supabase) return
     const [respondentRes, segmentRes] = await Promise.all([
       supabase
         .from('respondents')
@@ -56,6 +64,7 @@ export default function RespondentsPage() {
 
   const addRespondent = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!supabase) return
     setSaving(true)
 
     await supabase.from('respondents').insert({
@@ -72,6 +81,7 @@ export default function RespondentsPage() {
   }
 
   const deleteRespondent = async (id: string) => {
+    if (!supabase) return
     await supabase.from('respondents').delete().eq('id', id)
     loadData()
   }

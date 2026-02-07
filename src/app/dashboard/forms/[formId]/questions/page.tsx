@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useMemo } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
@@ -39,7 +39,14 @@ export default function QuestionsPage() {
   const [showAdd, setShowAdd] = useState(false)
   const [showAI, setShowAI] = useState(false)
   const [showCSV, setShowCSV] = useState(false)
-  const supabase = createClient()
+  
+  // Only create client in browser to avoid SSR issues
+  const supabase = useMemo(() => {
+    if (typeof window !== 'undefined') {
+      return createClient()
+    }
+    return null
+  }, [])
 
   // Add question form state
   const [newText, setNewText] = useState('')
@@ -76,7 +83,7 @@ export default function QuestionsPage() {
 
   const addQuestion = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!newText.trim()) return
+    if (!newText.trim() || !supabase) return
     setSaving(true)
 
     const options =
@@ -105,6 +112,7 @@ export default function QuestionsPage() {
   }
 
   const deleteQuestion = async (id: string) => {
+    if (!supabase) return
     await supabase.from('questions').delete().eq('id', id)
     loadQuestions()
   }
