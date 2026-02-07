@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -12,10 +12,18 @@ export default function LoginPage() {
   const [sent, setSent] = useState(false)
   const [error, setError] = useState('')
 
-  const supabase = createClient()
+  // Only create client in browser to avoid SSR issues
+  const supabase = useMemo(() => {
+    if (typeof window !== 'undefined') {
+      return createClient()
+    }
+    return null
+  }, [])
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!supabase) return
+    
     setLoading(true)
     setError('')
 
