@@ -1,0 +1,7 @@
+{
+  "name": "Formly AI",
+  "description": "An AI-native form and assessment platform that transforms how organizations collect input, validate understanding, and generate decision-ready insights through conversational interviews and intelligent weighting.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}
